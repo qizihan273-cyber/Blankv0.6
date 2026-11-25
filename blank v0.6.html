@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>留白 Blank v0.6.1 — BLANCRAFT</title>
+  <meta name="application-name" content="留白 Blank" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="appleStatusBarMeta" />
+  <meta name="apple-mobile-web-app-title" content="留白" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#F7F5F0" id="themeColorMeta" />
+  <link rel="manifest" id="pwaManifestLink" />
+  <link rel="apple-touch-icon" id="appleTouchIconLink" />
+  <link rel="icon" type="image/png" id="faviconLink" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* 黄金比例与空间节奏基准 */
+      --phi: 1.618;
+      --space-xs: 8px;
+      --space-sm: 13px;
+      --space-md: 21px;
+      --space-lg: 34px;
+
+      /* 高刷（90Hz / 120Hz）物理阻尼曲线：快起稳落，无多余拖尾 */
+      --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-spring-tactile: cubic-bezier(0.32, 1.28, 0.64, 1);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --theme-duration: 0.24s;
+
+      /* 白天：温润纸感 */
+      --bg-canvas: #ECE9E2;
+      --bg-phone: #F7F5F0;
+      --bg-card: #FCFBF8;
+      --bg-card-done: #F2F5F1;
+      --bg-subtle: #EFECE5;
+      --text-primary: #232220;
+      --text-secondary: #6E6A63;
+      --text-muted: #9A958C;
+      --border-hairline: rgba(35, 34, 32, 0.08);
+      --border-strong: rgba(35, 34, 32, 0.16);
+      --accent: #5D7A67;
+      --accent-soft: rgba(93, 122, 103, 0.16);
+      --accent-ripple: rgba(93, 122, 103, 0.28);
+      --dot-empty: rgba(35, 34, 32, 0.14);
+      --nav-bg: rgba(247, 245, 240, 0.94);
+      --nav-pill: #232220;
+      --nav-pill-text: #F7F5F0;
+      --shadow-phone: 0 28px 70px -18px rgba(24, 22, 18, 0.16);
+      --shadow-card: 0 2px 10px rgba(35, 34, 32, 0.03);
+    }
+
+    html[data-theme="dark"] {
+      /* 黑天：深邃夜读 */
+      --bg-canvas: #0B0B0A;
+      --bg-phone: #141413;
+      --bg-card: #1C1C1A;
+      --bg-card-done: #18201B;
+      --bg-subtle: #242320;
+      --text-primary: #E7E3D9;
+      --text-secondary: #9F9A90;
+      --text-muted: #6D6961;
+      --border-hairline: rgba(231, 227, 217, 0.08);
+      --border-strong: rgba(231, 227, 217, 0.16);
+      --accent: #789B84;
+      --accent-soft: rgba(120, 155, 132, 0.20);
+      --accent-ripple: rgba(120, 155, 132, 0.34);
+      --dot-empty: rgba(231, 227, 217, 0.16);
+      --nav-bg: rgba(20, 20, 19, 0.94);
+      --nav-pill: #E7E3D9;
+      --nav-pill-text: #141413;
+      --shadow-phone: 0 32px 80px -20px rgba(0, 0, 0, 0.72);
+      --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.24);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 仅在切换主题瞬间激活统一颜色过渡，平时零监听负担，保障 90Hz/120Hz 满帧 */
+    html.theme-animating,
+    html.theme-animating body,
+    html.theme-animating .phone-frame,
+    html.theme-animating .icon-btn,
+    html.theme-animating .habit-card,
+    html.theme-animating .check-btn,
+    html.theme-animating .check-ink-fill,
+    html.theme-animating .week-dot,
+    html.theme-animating .empty-box,
+    html.theme-animating .primary-btn,
+    html.theme-animating .journal-composer,
+    html.theme-animating .journal-footer,
+    html.theme-animating .journal-item,
+    html.theme-animating .profile-card,
+    html.theme-animating .setting-row,
+    html.theme-animating .ghost-btn,
+    html.theme-animating .tab-bar,
+    html.theme-animating .tab-slider,
+    html.theme-animating .tab-btn,
+    html.theme-animating .modal-sheet,
+    html.theme-animating .field-input,
+    html.theme-animating .freq-chip {
+      transition:
+        background-color var(--theme-duration) var(--ease-silk),
+        color var(--theme-duration) var(--ease-silk),
+        border-color var(--theme-duration) var(--ease-silk);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    button, input, textarea, [role="button"], .habit-info {
+      touch-action: manipulation;
+    }
+
+    .font-serif-sc {
+      font-family: 'Noto Serif SC', Georgia, serif;
+    }
+
+    /* Mobile-First 容器 */
+    .phone-frame {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      background-color: var(--bg-phone);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 480px) {
+      body {
+        padding: 24px 16px;
+        align-items: center;
+      }
+      .phone-frame {
+        min-height: 820px;
+        height: min(880px, calc(100dvh - 48px));
+        border-radius: 38px;
+        border: 1px solid var(--border-strong);
+        box-shadow: var(--shadow-phone);
+        overflow: hidden;
+      }
+    }
+
+    /* 顶部区域 */
+    .top-bar {
+      padding: calc(env(safe-area-inset-top, 0px) + 38px) var(--space-md) var(--space-xs);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      user-select: none;
+      contain: layout style;
+    }
+
+    .brand-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+    }
+
+    .brand-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.85;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 17px;
+      line-height: 1;
+      transition: transform 0.18s var(--ease-spring-tactile);
+      box-shadow: var(--shadow-card);
+    }
+
+    @media (hover: hover) {
+      .icon-btn:hover {
+        transform: translate3d(0, -1px, 0);
+      }
+    }
+
+    .icon-btn:active {
+      transform: scale3d(0.90, 0.90, 1);
+    }
+
+    /* 纯合成器双态日夜图标：完整半周旋转（180deg）+ 阻尼缩放回弹 */
+    .theme-icon-stack {
+      position: relative;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-glyph-item {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      will-change: transform, opacity;
+      transition:
+        transform 0.44s var(--ease-spring-tactile),
+        opacity 0.24s var(--ease-silk);
+    }
+
+    .glyph-moon {
+      opacity: 1;
+      transform: rotate(0deg) scale3d(1, 1, 1);
+    }
+
+    .glyph-sun {
+      opacity: 0;
+      transform: rotate(-180deg) scale3d(0.45, 0.45, 1);
+    }
+
+    html[data-theme="dark"] .glyph-moon {
+      opacity: 0;
+      transform: rotate(180deg) scale3d(0.45, 0.45, 1);
+    }
+
+    html[data-theme="dark"] .glyph-sun {
+      opacity: 1;
+      transform: rotate(0deg) scale3d(1, 1, 1);
+    }
+
+    /* 页面标题区 */
+    .page-header {
+      padding: var(--space-xs) var(--space-md) var(--space-md);
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .page-subtitle {
+      margin: 8px 0 0;
+      font-size: 13.5px;
+      line-height: var(--phi);
+      color: var(--text-secondary);
+      max-width: 32ch;
+    }
+
+    /* 主内容滚动区 */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 var(--space-md) 124px;
+      scrollbar-width: none;
+    }
+    .scroll-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+      animation: viewReveal 0.22s var(--ease-out-expo) both;
+    }
+
+    @keyframes viewReveal {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 5px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    /* 首次加载交错呼吸入场（仅首屏触发，切 Tab 不重复重播） */
+    @keyframes cardStaggerIn {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 6px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    .stagger-item {
+      animation: cardStaggerIn 0.28s var(--ease-out-expo) backwards;
+      animation-delay: calc(var(--stagger-index, 0) * 24ms);
+    }
+
+    /* 习惯卡片（布局隔离 + 合成器级位移） */
+    .habit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      position: relative;
+    }
+
+    .habit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hairline);
+      border-radius: 18px;
+      padding: 16px 17px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-card);
+      contain: layout style;
+      transition:
+        background-color 0.22s var(--ease-silk),
+        border-color 0.22s var(--ease-silk),
+        transform 0.18s var(--ease-spring-tactile);
+    }
+
+    .habit-card:active {
+      transform: scale3d(0.992, 0.992, 1);
+    }
+
+    .habit-card.done {
+      background: var(--bg-card-done);
+      border-color: rgba(93, 122, 103, 0.26);
+    }
+
+    .habit-left {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    /* 打卡圆圈：宣纸墨滴晕染 + SVG 笔画绘制 */
+    .check-btn {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-strong);
+      background: transparent;
+      color: #FFFFFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: visible;
+      transition:
+        border-color 0.2s var(--ease-silk),
+        transform 0.18s var(--ease-spring-tactile);
+    }
+
+    .check-btn::before {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+    }
+
+    .check-btn:active {
+      transform: scale3d(0.86, 0.86, 1);
+    }
+
+    .check-ink-fill {
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      background: var(--accent);
+      transform: scale3d(0, 0, 1);
+      opacity: 0;
+      transition:
+        transform 0.28s var(--ease-spring-tactile),
+        opacity 0.18s var(--ease-silk);
+      pointer-events: none;
+    }
+
+    .habit-card.done .check-btn {
+      border-color: var(--accent);
+    }
+
+    .habit-card.done .check-ink-fill {
+      transform: scale3d(1, 1, 1);
+      opacity: 1;
+    }
+
+    .check-halo {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      opacity: 0;
+      transform: scale3d(0.76, 0.76, 1);
+      pointer-events: none;
+    }
+
+    .check-btn.just-checked .check-halo {
+      animation: inkHaloExpand 0.44s var(--ease-silk) forwards;
+    }
+
+    @keyframes inkHaloExpand {
+      0% {
+        opacity: 0.52;
+        transform: scale3d(0.76, 0.76, 1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale3d(1.45, 1.45, 1);
+      }
+    }
+
+    .check-svg {
+      position: relative;
+      z-index: 1;
+      width: 13px;
+      height: 13px;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .check-path {
+      stroke-dasharray: 16;
+      stroke-dashoffset: 16;
+      opacity: 0;
+      transition:
+        stroke-dashoffset 0.24s var(--ease-silk) 0.04s,
+        opacity 0.12s ease 0.03s;
+    }
+
+    .habit-card.done .check-path {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+
+    .habit-info {
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+
+    .habit-name {
+      font-size: 15.5px;
+      font-weight: 500;
+      line-height: 1.38;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.22s var(--ease-silk);
+    }
+
+    .habit-card.done .habit-name {
+      color: var(--text-secondary);
+    }
+
+    .habit-freq {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* 自然周节律圆点 */
+    .week-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    .week-dot {
+      position: relative;
+      width: 7.5px;
+      height: 7.5px;
+      border-radius: 50%;
+      background: var(--dot-empty);
+      transition:
+        background-color 0.22s var(--ease-silk),
+        transform 0.28s var(--ease-spring-tactile);
+    }
+
+    .week-dot.filled {
+      background: var(--accent);
+    }
+
+    .week-dot.today {
+      box-shadow: 0 0 0 2.5px var(--accent-soft);
+    }
+
+    .week-dot.pulse-dot {
+      animation: dotRippleBounce 0.38s var(--ease-spring-tactile);
+    }
+
+    .week-dot.pulse-dot::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: var(--accent-ripple);
+      animation: dotWave 0.42s var(--ease-silk) forwards;
+      pointer-events: none;
+    }
+
+    @keyframes dotRippleBounce {
+      0% { transform: scale3d(0.8, 0.8, 1); }
+      45% { transform: scale3d(1.36, 1.36, 1); }
+      100% { transform: scale3d(1, 1, 1); }
+    }
+
+    @keyframes dotWave {
+      0% {
+        opacity: 0.85;
+        transform: scale3d(0.8, 0.8, 1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale3d(2.2, 2.2, 1);
+      }
+    }
+
+    /* 空状态 */
+    .empty-box {
+      margin-top: 26px;
+      padding: 42px 24px;
+      border-radius: 22px;
+      border: 1px dashed var(--border-strong);
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .empty-title {
+      font-size: 15.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0 0 6px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      line-height: 1.65;
+      margin: 0 0 20px;
+      color: var(--text-muted);
+    }
+
+    .primary-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 13.5px;
+      font-weight: 500;
+      background: var(--nav-pill);
+      color: var(--nav-pill-text);
+      cursor: pointer;
+      transition: transform 0.16s var(--ease-spring-tactile);
+    }
+
+    .primary-btn:active {
+      transform: scale3d(0.93, 0.93, 1);
+    }
+
+    /* 日记模块 */
+    .journal-composer {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hairline);
+      border-radius: 20px;
+      padding: 15px 17px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 18px;
+      transition: border-color 0.2s var(--ease-silk);
+    }
+
+    .journal-composer:focus-within {
+      border-color: var(--border-strong);
+    }
+
+    .journal-textarea {
+      width: 100%;
+      min-height: 84px;
+      max-height: 260px;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 15px;
+      line-height: var(--phi);
+    }
+
+    .journal-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .journal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-hairline);
+    }
+
+    .journal-date-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .journal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .journal-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hairline);
+      border-radius: 18px;
+      padding: 15px 17px;
+      box-shadow: var(--shadow-card);
+      contain: layout style;
+      transition:
+        transform 0.2s var(--ease-silk),
+        opacity 0.18s var(--ease-silk);
+    }
+
+    .journal-item.removing {
+      opacity: 0;
+      transform: translate3d(0, -5px, 0) scale3d(0.98, 0.98, 1);
+    }
+
+    .journal-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .journal-del {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition:
+        color 0.14s ease,
+        background-color 0.14s ease,
+        transform 0.16s var(--ease-spring-tactile);
+    }
+
+    @media (hover: hover) {
+      .journal-del:hover {
+        color: var(--text-primary);
+        background: var(--bg-subtle);
+      }
+    }
+
+    .journal-del:active {
+      transform: scale3d(0.92, 0.92, 1);
+    }
+
+    .journal-content {
+      margin: 0;
+      font-size: 14.5px;
+      line-height: var(--phi);
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* “我”模块 */
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hairline);
+      border-radius: 20px;
+      padding: 4px 18px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 24px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-hairline);
+      gap: 12px;
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .setting-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--border-strong);
+      background: transparent;
+      color: var(--text-primary);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition:
+        background-color 0.15s ease,
+        transform 0.16s var(--ease-spring-tactile);
+    }
+
+    @media (hover: hover) {
+      .ghost-btn:hover {
+        background: var(--bg-subtle);
+      }
+    }
+
+    .ghost-btn:active {
+      transform: scale3d(0.93, 0.93, 1);
+    }
+
+    .ghost-btn.danger {
+      color: #B55448;
+      border-color: rgba(181, 84, 72, 0.35);
+    }
+
+    html[data-theme="dark"] .ghost-btn.danger {
+      color: #E07A6D;
+    }
+
+    /* BLANCRAFT 品牌落款 */
+    .studio-signoff {
+      margin-top: 28px;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      user-select: none;
+      opacity: 0.78;
+    }
+
+    .studio-mark {
+      width: 18px;
+      height: 18px;
+      color: var(--accent);
+      opacity: 0.85;
+    }
+
+    .studio-name {
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      font-weight: 500;
+    }
+
+    /* 底部悬浮三段式胶囊导航：日常｜日记｜我 */
+    .bottom-dock {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      padding: 10px var(--space-md) calc(env(safe-area-inset-bottom, 0px) + 18px);
+      background: linear-gradient(to top, var(--bg-phone) 72%, transparent);
+      pointer-events: none;
+      contain: layout style;
+    }
+
+    .tab-bar {
+      position: relative;
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      user-select: none;
+      touch-action: pan-y;
+    }
+
+    .tab-slider {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc((100% - 8px) / 3);
+      border-radius: 999px;
+      background: var(--nav-pill);
+      transform: translate3d(0%, 0, 0);
+      will-change: transform;
+      transition: transform 0.28s var(--ease-silk);
+      z-index: 0;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .tab-slider.dragging {
+      transition: none !important;
+    }
+
+    .tab-btn {
+      position: relative;
+      z-index: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 11px 0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition:
+        color 0.22s var(--ease-silk),
+        transform 0.16s var(--ease-spring-tactile);
+    }
+
+    .tab-btn:active {
+      transform: scale3d(0.95, 0.95, 1);
+    }
+
+    .tab-btn.active {
+      color: var(--nav-pill-text);
+    }
+
+    /* 轻量级状态提示条 */
+    .toast-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 94px;
+      transform: translate3d(-50%, 6px, 0) scale3d(0.96, 0.96, 1);
+      background: var(--nav-pill);
+      color: var(--nav-pill-text);
+      font-size: 13px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.18s var(--ease-silk),
+        transform 0.24s var(--ease-spring-tactile);
+      z-index: 60;
+      white-space: nowrap;
+    }
+
+    .toast-bar.show {
+      opacity: 1;
+      transform: translate3d(-50%, 0, 0) scale3d(1, 1, 1);
+    }
+
+    /* 纸片浮起弹窗动效 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 17, 15, 0.34);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.2s var(--ease-silk),
+        visibility 0.2s;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 410px;
+      background: var(--bg-phone);
+      color: var(--text-primary);
+      border-radius: 26px;
+      padding: 22px;
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-phone);
+      transform: translate3d(0, 18px, 0) scale3d(0.985, 0.985, 1);
+      opacity: 0;
+      transition:
+        transform 0.26s var(--ease-out-expo),
+        opacity 0.2s var(--ease-silk);
+    }
+
+    .modal-backdrop.open .modal-sheet {
+      transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+      opacity: 1;
+    }
+
+    .modal-title {
+      margin: 0 0 14px;
+      font-size: 16.5px;
+      font-weight: 600;
+    }
+
+    .modal-desc {
+      margin: 0 0 18px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .field-input {
+      width: 100%;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color 0.18s ease;
+    }
+
+    .field-input:focus {
+      border-color: var(--accent);
+    }
+
+    .freq-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .freq-chip {
+      flex: 1;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border-radius: 12px;
+      padding: 10px 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition:
+        background-color 0.18s var(--ease-silk),
+        border-color 0.18s var(--ease-silk),
+        color 0.18s var(--ease-silk),
+        transform 0.16s var(--ease-spring-tactile);
+    }
+
+    .freq-chip:active {
+      transform: scale3d(0.95, 0.95, 1);
+    }
+
+    .freq-chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-right {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-frame" id="app">
+    <!-- 顶部栏 -->
+    <header class="top-bar">
+      <div class="brand-meta">
+        <span>BLANK</span>
+        <span class="brand-dot"></span>
+        <span id="todayLabel"></span>
+      </div>
+      <div class="top-actions">
+        <button type="button" class="icon-btn" id="addHabitTopBtn" title="添加习惯" aria-label="添加习惯">+</button>
+        <button type="button" class="icon-btn" id="themeToggleBtn" title="切换昼夜模式" aria-label="切换昼夜模式">
+          <span class="theme-icon-stack" aria-hidden="true">
+            <span class="theme-glyph-item glyph-moon">☾</span>
+            <span class="theme-glyph-item glyph-sun">☀</span>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <main class="scroll-area" id="scrollArea">
+      <!-- 视图 1：日常 -->
+      <section class="view active" id="view-daily">
+        <div class="page-header">
+          <h1 class="page-title font-serif-sc">日常</h1>
+          <p class="page-subtitle">人在一个不断尝试改变你的世界里仍能坚持自我，就是最大的成就。</p>
+        </div>
+        <div class="habit-list" id="habitList"></div>
+      </section>
+
+      <!-- 视图 2：日记 -->
+      <section class="view" id="view-journal">
+        <div class="page-header">
+          <h1 class="page-title font-serif-sc">日记</h1>
+          <p class="page-subtitle">真心话。</p>
+        </div>
+        <div class="journal-composer">
+          <textarea
+            class="journal-textarea"
+            id="journalInput"
+            placeholder="写下此刻的想法或今天的一件小事..."
+          ></textarea>
+          <div class="journal-footer">
+            <span class="journal-date-hint" id="journalHint"></span>
+            <button type="button" class="primary-btn" id="saveJournalBtn">记下</button>
+          </div>
+        </div>
+        <div class="journal-list" id="journalList"></div>
+      </section>
+
+      <!-- 视图 3：我 -->
+      <section class="view" id="view-me">
+        <div class="page-header">
+          <h1 class="page-title font-serif-sc">id</h1>
+          <p class="page-subtitle">涵哥牛逼666</p>
+        </div>
+        <div class="profile-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">主屏幕应用 (PWA)</div>
+              <div class="setting-desc" id="pwaStatusDesc">支持添加到主屏幕与断网离线使用</div>
+            </div>
+            <button type="button" class="ghost-btn" id="installPwaBtn">安装指南</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">昼夜外观</div>
+            </div>
+            <button type="button" class="ghost-btn" id="meThemeBtn">切换</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">导出本地备份</div>
+              <div class="setting-desc">将习惯与日记保存为 JSON 文件</div>
+            </div>
+            <button type="button" class="ghost-btn" id="exportBtn">导出</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">清空全部数据</div>
+              <div class="setting-desc">移除当前设备上的习惯与日记</div>
+            </div>
+            <button type="button" class="ghost-btn danger" id="resetBtn">清空</button>
+          </div>
+        </div>
+
+        <footer class="studio-signoff" aria-label="BLANCRAFT">
+          <svg class="studio-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3L14.5 9.5L21 9.5" />
+            <path d="M21 12L14.5 14.5L14.5 21" />
+            <path d="M12 21L9.5 14.5L3 14.5" />
+            <path d="M3 12L9.5 9.5L9.5 3" />
+          </svg>
+          <span class="studio-name">CRAFTED BY BLANCRAFT · v0.6.1</span>
+        </footer>
+      </section>
+    </main>
+
+    <!-- 底部悬浮三段式胶囊导航：日常｜日记｜我 -->
+    <nav class="bottom-dock" aria-label="主导航">
+      <div class="tab-bar" id="tabBar">
+        <div class="tab-slider" id="tabSlider"></div>
+        <button type="button" class="tab-btn active" data-tab="daily" data-index="0">日常</button>
+        <button type="button" class="tab-btn" data-tab="journal" data-index="1">日记</button>
+        <button type="button" class="tab-btn" data-tab="me" data-index="2">我</button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- 轻提示条 -->
+  <div class="toast-bar" id="toastBar" role="status" aria-live="polite"></div>
+
+  <!-- 新建/编辑习惯弹窗 -->
+  <div class="modal-backdrop" id="habitModal">
+    <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 class="modal-title" id="modalTitle">新习惯</h2>
+      <input
+        type="text"
+        class="field-input"
+        id="habitNameInput"
+        placeholder="例如：睡前读 5 页书、喝一杯温水"
+        maxlength="40"
+      />
+      <div class="freq-group" id="freqGroup">
+        <button type="button" class="freq-chip active" data-freq="daily">每天</button>
+        <button type="button" class="freq-chip" data-freq="weekday">工作日</button>
+        <button type="button" class="freq-chip" data-freq="weekend">周末</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn danger" id="deleteHabitBtn" style="display: none;">删除</button>
+        <div class="modal-right">
+          <button type="button" class="ghost-btn" id="cancelModalBtn">取消</button>
+          <button type="button" class="primary-btn" id="saveHabitBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加到主屏幕指引弹窗 -->
+  <div class="modal-backdrop" id="pwaGuideModal">
+    <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="pwaGuideTitle">
+      <h2 class="modal-title" id="pwaGuideTitle">安装到手机主屏幕</h2>
+      <p class="modal-desc" id="pwaGuideDesc">
+        <strong>iOS Safari：</strong>点击底部栏中间的「分享」图标，向上滑动选择「添加到主屏幕」。<br><br>
+        <strong>Android / Chrome / Edge：</strong>点击浏览器右上角菜单，选择「安装应用」或「添加到主屏幕」，即可全屏无地址栏离线运行。
+      </p>
+      <div class="modal-actions">
+        <div class="modal-right">
+          <button type="button" class="primary-btn" id="closePwaGuideBtn">知道了</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 清空数据自定义确认弹窗 -->
+  <div class="modal-backdrop" id="confirmResetModal">
+    <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+      <h2 class="modal-title" id="resetModalTitle">清空全部本地数据</h2>
+      <p class="modal-desc">当前设备上的所有习惯记录与日记将被移除，建议先导出备份。</p>
+      <div class="modal-actions">
+        <div class="modal-right">
+          <button type="button" class="ghost-btn" id="cancelResetBtn">取消</button>
+          <button type="button" class="ghost-btn danger" id="confirmResetBtn">确认清空</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* 1. 硬件微震动触觉反馈模块 */
+      const Haptics = {
+        tap() {
+          if (navigator.vibrate) navigator.vibrate(6);
+        },
+        check() {
+          if (navigator.vibrate) navigator.vibrate(12);
+        },
+        soft() {
+          if (navigator.vibrate) navigator.vibrate(4);
+        }
+      };
+
+      /* 2. 日期与自然周计算模块 */
+      const DateUtils = {
+        weekNames: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+
+        formatKey(date) {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, "0");
+          const d = String(date.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        },
+
+        startOfDay(date) {
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        },
+
+        getMonday(date) {
+          const d = this.startOfDay(date);
+          const day = d.getDay();
+          const diff = day === 0 ? -6 : 1 - day;
+          d.setDate(d.getDate() + diff);
+          return d;
+        },
+
+        formatChinese(date) {
+          return `${date.getMonth() + 1}月${date.getDate()}日 · ${this.weekNames[date.getDay()]}`;
+        },
+
+        formatTimeStamp(ts) {
+          const d = new Date(ts);
+          const m = d.getMonth() + 1;
+          const day = d.getDate();
+          const hh = String(d.getHours()).padStart(2, "0");
+          const mm = String(d.getMinutes()).padStart(2, "0");
+          return `${m}月${day}日 ${hh}:${mm}`;
+        },
+
+        getTodayContext() {
+          const now = new Date();
+          const todayKey = this.formatKey(now);
+          const monday = this.getMonday(now);
+          const weekDates = [];
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            weekDates.push({
+              date: d,
+              key: this.formatKey(d),
+              isToday: this.formatKey(d) === todayKey
+            });
+          }
+          return {
+            now,
+            todayKey,
+            chineseDate: this.formatChinese(now),
+            weekDates
+          };
+        }
+      };
+
+      /* 3. 单一状态源与持久化（保持 blank_app_v1 兼容） */
+      const Store = {
+        KEY: "blank_app_v1",
+        state: {
+          theme: "light",
+          habits: [],
+          journals: []
+        },
+
+        init() {
+          try {
+            const raw = localStorage.getItem(this.KEY);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            this.state = {
+              theme: parsed.theme === "dark" ? "dark" : "light",
+              habits: Array.isArray(parsed.habits) ? parsed.habits : [],
+              journals: Array.isArray(parsed.journals) ? parsed.journals : []
+            };
+          } catch {
+            this.state = { theme: "light", habits: [], journals: [] };
+          }
+        },
+
+        save() {
+          try {
+            localStorage.setItem(this.KEY, JSON.stringify(this.state));
+          } catch {
+            UI.showToast("本地存储空间不足");
+          }
+        }
+      };
+
+      /* 4. FLIP 列表平滑位移协调器 */
+      const Motion = {
+        capturePositions(container, selector) {
+          const map = new Map();
+          container.querySelectorAll(selector).forEach((el) => {
+            const id = el.dataset.id;
+            if (id) map.set(id, el.getBoundingClientRect());
+          });
+          return map;
+        },
+
+        playFlip(container, selector, firstRects) {
+          if (!firstRects || firstRects.size === 0) return;
+          container.querySelectorAll(selector).forEach((el) => {
+            const id = el.dataset.id;
+            const first = firstRects.get(id);
+            if (!first) return;
+            const last = el.getBoundingClientRect();
+            const dy = first.top - last.top;
+            if (Math.abs(dy) < 1) return;
+
+            el.style.transition = "none";
+            el.style.transform = `translate3d(0, ${dy}px, 0)`;
+
+            requestAnimationFrame(() => {
+              el.style.transition = "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)";
+              el.style.transform = "translate3d(0, 0, 0)";
+            });
+          });
+        },
+
+        rubberBand(value, min, max, resistance = 0.22) {
+          if (value < min) {
+            return min + (value - min) * resistance;
+          }
+          if (value > max) {
+            return max + (value - max) * resistance;
+          }
+          return value;
+        }
+      };
+
+      /* 5. UI 控制器与零重建局部更新引擎 */
+      const UI = {
+        els: {},
+        currentTabIndex: 0,
+        tabs: ["daily", "journal", "me"],
+        editingHabitId: null,
+        selectedFreq: "daily",
+        toastTimer: null,
+        focusTimer: null,
+        themeAnimTimer: null,
+        cachedDateCtx: DateUtils.getTodayContext(),
+
+        init() {
+          this.els = {
+            app: document.getElementById("app"),
+            scrollArea: document.getElementById("scrollArea"),
+            todayLabel: document.getElementById("todayLabel"),
+            journalHint: document.getElementById("journalHint"),
+            habitList: document.getElementById("habitList"),
+            journalList: document.getElementById("journalList"),
+            journalInput: document.getElementById("journalInput"),
+            tabBar: document.getElementById("tabBar"),
+            tabSlider: document.getElementById("tabSlider"),
+            toastBar: document.getElementById("toastBar"),
+            habitModal: document.getElementById("habitModal"),
+            modalTitle: document.getElementById("modalTitle"),
+            habitNameInput: document.getElementById("habitNameInput"),
+            deleteHabitBtn: document.getElementById("deleteHabitBtn"),
+            confirmResetModal: document.getElementById("confirmResetModal")
+          };
+
+          this.applyTheme();
+          this.syncDateHeader();
+          this.renderHabits(true);
+          this.renderJournals(true);
+          this.bindEvents();
+        },
+
+        escapeHtml(str) {
+          return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        },
+
+        freqLabel(freq) {
+          if (freq === "weekday") return "工作日";
+          if (freq === "weekend") return "周末";
+          return "每天";
+        },
+
+        showToast(text) {
+          const el = this.els.toastBar;
+          el.textContent = text;
+          el.classList.add("show");
+          clearTimeout(this.toastTimer);
+          this.toastTimer = setTimeout(() => {
+            el.classList.remove("show");
+          }, 1650);
+        },
+
+        syncDateHeader() {
+          this.cachedDateCtx = DateUtils.getTodayContext();
+          this.els.todayLabel.textContent = this.cachedDateCtx.chineseDate;
+          this.els.journalHint.textContent = this.cachedDateCtx.chineseDate;
+        },
+
+        applyTheme() {
+          const isDark = Store.state.theme === "dark";
+          document.documentElement.setAttribute("data-theme", Store.state.theme);
+          const themeMeta = document.getElementById("themeColorMeta");
+          const appleStatusMeta = document.getElementById("appleStatusBarMeta");
+          if (themeMeta) themeMeta.setAttribute("content", isDark ? "#141413" : "#F7F5F0");
+          if (appleStatusMeta) appleStatusMeta.setAttribute("content", isDark ? "black-translucent" : "default");
+        },
+
+        /* 自然周圆点 HTML 构建（仅渲染创建日到本周日的圆点） */
+        buildWeekDotsHTML(habit) {
+          const { weekDates } = this.cachedDateCtx;
+          const createdDate = habit.createdAt
+            ? DateUtils.startOfDay(new Date(habit.createdAt))
+            : DateUtils.startOfDay(this.cachedDateCtx.now);
+
+          let html = `<div class="week-dots">`;
+          for (let i = 0; i < weekDates.length; i++) {
+            const item = weekDates[i];
+            if (item.date < createdDate) continue;
+            const filled = Boolean(habit.logs && habit.logs[item.key]);
+            const cls = [
+              "week-dot",
+              filled ? "filled" : "",
+              item.isToday ? "today" : ""
+            ].filter(Boolean).join(" ");
+            html += `<span class="${cls}" data-day-key="${item.key}"></span>`;
+          }
+          html += `</div>`;
+          return html;
+        },
+
+        renderHabits(animateStagger = false) {
+          const listEl = this.els.habitList;
+          const { todayKey } = this.cachedDateCtx;
+
+          if (!Store.state.habits.length) {
+            listEl.innerHTML = `
+              <div class="empty-box">
+                <p class="empty-title">还没有习惯</p>
+                <p class="empty-desc">加一条今天想做的事，从现在开始记录。</p>
+                <button type="button" class="primary-btn" data-action="empty-add">添加第一个习惯</button>
+              </div>
+            `;
+            return;
+          }
+
+          listEl.innerHTML = Store.state.habits.map((habit, idx) => {
+            const isDone = Boolean(habit.logs && habit.logs[todayKey]);
+            const staggerAttr = animateStagger
+              ? ` style="--stagger-index: ${Math.min(idx, 10)};"`
+              : "";
+            return `
+              <div class="habit-card${isDone ? " done" : ""}${animateStagger ? " stagger-item" : ""}" data-id="${habit.id}"${staggerAttr}>
+                <div class="habit-left">
+                  <button type="button" class="check-btn" data-action="toggle" aria-label="${isDone ? "取消完成" : "完成打卡"}">
+                    <span class="check-ink-fill"></span>
+                    <span class="check-halo"></span>
+                    <svg class="check-svg" viewBox="0 0 14 14" fill="none">
+                      <path class="check-path" d="M2.5 7.3L5.6 10.4L11.6 3.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div class="habit-info" data-action="edit">
+                    <div class="habit-name">${this.escapeHtml(habit.name)}</div>
+                    <div class="habit-freq">${this.freqLabel(habit.freq)}</div>
+                  </div>
+                </div>
+                ${this.buildWeekDotsHTML(habit)}
+              </div>
+            `;
+          }).join("");
+        },
+
+        /* 原地差量更新打卡状态：零 DOM 重建 */
+        toggleHabitInPlace(habitId) {
+          const habit = Store.state.habits.find((h) => h.id === habitId);
+          if (!habit) return;
+
+          const { todayKey } = this.cachedDateCtx;
+          if (!habit.logs) habit.logs = {};
+
+          const willComplete = !habit.logs[todayKey];
+          if (willComplete) {
+            habit.logs[todayKey] = true;
+            Haptics.check();
+          } else {
+            delete habit.logs[todayKey];
+            Haptics.soft();
+          }
+          Store.save();
+
+          const card = this.els.habitList.querySelector(`.habit-card[data-id="${habitId}"]`);
+          if (!card) {
+            this.renderHabits(false);
+            return;
+          }
+
+          const checkBtn = card.querySelector(".check-btn");
+          const todayDot = card.querySelector(`.week-dot[data-day-key="${todayKey}"]`);
+
+          card.classList.toggle("done", willComplete);
+          if (checkBtn) {
+            checkBtn.setAttribute("aria-label", willComplete ? "取消完成" : "完成打卡");
+            checkBtn.classList.remove("just-checked");
+            if (willComplete) {
+              requestAnimationFrame(() => {
+                checkBtn.classList.add("just-checked");
+              });
+            }
+          }
+
+          if (todayDot) {
+            todayDot.classList.toggle("filled", willComplete);
+            todayDot.classList.remove("pulse-dot");
+            if (willComplete) {
+              requestAnimationFrame(() => {
+                todayDot.classList.add("pulse-dot");
+              });
+            }
+          }
+        },
+
+        renderJournals(animateStagger = false) {
+          const listEl = this.els.journalList;
+          if (!Store.state.journals.length) {
+            listEl.innerHTML = `
+              <div class="empty-box">
+                <p class="empty-title">还没有日记</p>
+                <p class="empty-desc">随手记下一句话，留给未来的自己。</p>
+              </div>
+            `;
+            return;
+          }
+
+          listEl.innerHTML = Store.state.journals.map((item, idx) => {
+            const staggerAttr = animateStagger
+              ? ` style="--stagger-index: ${Math.min(idx, 10)};"`
+              : "";
+            return `
+              <article class="journal-item${animateStagger ? " stagger-item" : ""}" data-id="${item.id}"${staggerAttr}>
+                <div class="journal-item-head">
+                  <span>${DateUtils.formatTimeStamp(item.createdAt)}</span>
+                  <button type="button" class="journal-del" data-action="delete-journal" data-id="${item.id}">删除</button>
+                </div>
+                <p class="journal-content">${this.escapeHtml(item.content)}</p>
+              </article>
+            `;
+          }).join("");
+        },
+
+        switchTab(index, triggerHaptic = true) {
+          const clamped = Math.max(0, Math.min(this.tabs.length - 1, index));
+          this.els.tabSlider.style.transform = `translate3d(${clamped * 100}%, 0, 0)`;
+
+          if (clamped === this.currentTabIndex) return;
+
+          this.currentTabIndex = clamped;
+          const tab = this.tabs[clamped];
+          if (triggerHaptic) Haptics.tap();
+
+          this.els.tabBar.querySelectorAll(".tab-btn").forEach((btn, idx) => {
+            btn.classList.toggle("active", idx === clamped);
+          });
+
+          document.querySelectorAll(".view").forEach((view) => {
+            view.classList.toggle("active", view.id === `view-${tab}`);
+          });
+
+          this.els.scrollArea.scrollTop = 0;
+
+          if (tab === "daily") this.renderHabits(false);
+          if (tab === "journal") this.renderJournals(false);
+        },
+
+        setFreqChips(freq) {
+          this.selectedFreq = freq;
+          document.querySelectorAll(".freq-chip").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.freq === freq);
+          });
+        },
+
+        openHabitModal(habitId = null) {
+          this.editingHabitId = habitId;
+          clearTimeout(this.focusTimer);
+          Haptics.tap();
+          if (habitId) {
+            const habit = Store.state.habits.find((h) => h.id === habitId);
+            if (!habit) return;
+            this.els.modalTitle.textContent = "编辑习惯";
+            this.els.habitNameInput.value = habit.name;
+            this.setFreqChips(habit.freq || "daily");
+            this.els.deleteHabitBtn.style.display = "inline-block";
+          } else {
+            this.els.modalTitle.textContent = "新习惯";
+            this.els.habitNameInput.value = "";
+            this.setFreqChips("daily");
+            this.els.deleteHabitBtn.style.display = "none";
+          }
+          this.els.habitModal.classList.add("open");
+          this.focusTimer = setTimeout(() => {
+            this.els.habitNameInput.focus({ preventScroll: true });
+          }, 240);
+        },
+
+        closeHabitModal() {
+          clearTimeout(this.focusTimer);
+          this.els.habitNameInput.blur();
+          this.els.habitModal.classList.remove("open");
+          this.editingHabitId = null;
+        },
+
+        saveHabitFromModal() {
+          const name = this.els.habitNameInput.value.trim();
+          if (!name) {
+            this.els.habitNameInput.focus();
+            return;
+          }
+
+          const firstRects = Motion.capturePositions(this.els.habitList, ".habit-card");
+
+          if (this.editingHabitId) {
+            const habit = Store.state.habits.find((h) => h.id === this.editingHabitId);
+            if (habit) {
+              habit.name = name;
+              habit.freq = this.selectedFreq;
+            }
+            Haptics.tap();
+            this.showToast("习惯已更新");
+          } else {
+            Store.state.habits.unshift({
+              id: "h_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+              name,
+              freq: this.selectedFreq,
+              createdAt: Date.now(),
+              logs: {}
+            });
+            Haptics.check();
+            this.showToast("已添加新习惯");
+          }
+
+          Store.save();
+          this.renderHabits(false);
+          Motion.playFlip(this.els.habitList, ".habit-card", firstRects);
+          this.closeHabitModal();
+        },
+
+        deleteEditingHabit() {
+          if (!this.editingHabitId) return;
+          const firstRects = Motion.capturePositions(this.els.habitList, ".habit-card");
+          Store.state.habits = Store.state.habits.filter((h) => h.id !== this.editingHabitId);
+          Store.save();
+          this.renderHabits(false);
+          Motion.playFlip(this.els.habitList, ".habit-card", firstRects);
+          this.closeHabitModal();
+          Haptics.soft();
+          this.showToast("习惯已删除");
+        },
+
+        saveJournalEntry() {
+          const textarea = this.els.journalInput;
+          const content = textarea.value.trim();
+          if (!content) {
+            textarea.focus();
+            return;
+          }
+
+          const firstRects = Motion.capturePositions(this.els.journalList, ".journal-item");
+
+          Store.state.journals.unshift({
+            id: "j_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+            content,
+            createdAt: Date.now()
+          });
+
+          textarea.value = "";
+          textarea.style.height = "auto";
+          Store.save();
+          this.renderJournals(false);
+          Motion.playFlip(this.els.journalList, ".journal-item", firstRects);
+          Haptics.check();
+          this.showToast("已记下");
+        },
+
+        autoGrowTextarea(el) {
+          el.style.height = "auto";
+          el.style.height = Math.min(el.scrollHeight, 260) + "px";
+        },
+
+        bindEvents() {
+          /* 习惯列表事件委托 */
+          this.els.habitList.addEventListener("click", (e) => {
+            const actionEl = e.target.closest("[data-action]");
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+
+            if (action === "empty-add") {
+              this.openHabitModal();
+              return;
+            }
+
+            const card = actionEl.closest(".habit-card");
+            const habitId = card?.dataset.id;
+            if (!habitId) return;
+
+            if (action === "toggle") {
+              this.toggleHabitInPlace(habitId);
+            } else if (action === "edit") {
+              this.openHabitModal(habitId);
+            }
+          });
+
+          /* 日记列表事件委托 + FLIP 平滑重排 */
+          this.els.journalList.addEventListener("click", (e) => {
+            const delBtn = e.target.closest('[data-action="delete-journal"]');
+            if (!delBtn) return;
+            const id = delBtn.dataset.id;
+            const card = delBtn.closest(".journal-item");
+            if (!card || card.classList.contains("removing")) return;
+
+            Haptics.soft();
+            card.classList.add("removing");
+            setTimeout(() => {
+              const firstRects = Motion.capturePositions(this.els.journalList, ".journal-item");
+              Store.state.journals = Store.state.journals.filter((j) => j.id !== id);
+              Store.save();
+              this.renderJournals(false);
+              Motion.playFlip(this.els.journalList, ".journal-item", firstRects);
+              this.showToast("已删除日记");
+            }, 190);
+          });
+
+          /* 顶部按钮：克制安静的昼夜渐隐切换 */
+          document.getElementById("addHabitTopBtn").addEventListener("click", () => this.openHabitModal());
+          const handleThemeToggle = () => {
+            document.documentElement.classList.add("theme-animating");
+            Store.state.theme = Store.state.theme === "dark" ? "light" : "dark";
+            Store.save();
+            Haptics.tap();
+            this.applyTheme();
+            clearTimeout(this.themeAnimTimer);
+            this.themeAnimTimer = setTimeout(() => {
+              document.documentElement.classList.remove("theme-animating");
+            }, 260);
+          };
+          document.getElementById("themeToggleBtn").addEventListener("click", handleThemeToggle);
+          document.getElementById("meThemeBtn").addEventListener("click", handleThemeToggle);
+
+          /* 习惯弹窗交互与回车提交 */
+          document.getElementById("cancelModalBtn").addEventListener("click", () => this.closeHabitModal());
+          this.els.habitModal.addEventListener("click", (e) => {
+            if (e.target === this.els.habitModal) this.closeHabitModal();
+          });
+          document.querySelectorAll(".freq-chip").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              Haptics.soft();
+              this.setFreqChips(chip.dataset.freq);
+            });
+          });
+          document.getElementById("saveHabitBtn").addEventListener("click", () => this.saveHabitFromModal());
+          this.els.habitNameInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              this.saveHabitFromModal();
+            } else if (e.key === "Escape") {
+              this.closeHabitModal();
+            }
+          });
+          this.els.deleteHabitBtn.addEventListener("click", () => this.deleteEditingHabit());
+
+          /* 日记自动增高与快捷提交 */
+          this.els.journalInput.addEventListener("input", () => this.autoGrowTextarea(this.els.journalInput));
+          this.els.journalInput.addEventListener("keydown", (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              this.saveJournalEntry();
+            }
+          });
+          document.getElementById("saveJournalBtn").addEventListener("click", () => this.saveJournalEntry());
+
+          /* 底部三段式导航：rAF 帧同步跟手 + 连续橡皮筋阻尼 + 速度吸附（适配 90Hz/120Hz 高刷） */
+          this.els.tabBar.querySelectorAll(".tab-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              this.switchTab(Number(btn.dataset.index || 0), true);
+            });
+          });
+
+          let dragStartX = 0;
+          let dragStartY = 0;
+          let dragStartTime = 0;
+          let isDraggingTab = false;
+          let tabWidth = 0;
+          let pendingPercent = null;
+          let dragRafId = null;
+
+          const flushSliderFrame = () => {
+            dragRafId = null;
+            if (pendingPercent !== null) {
+              this.els.tabSlider.style.transform = `translate3d(${pendingPercent}%, 0, 0)`;
+            }
+          };
+
+          this.els.tabBar.addEventListener("touchstart", (e) => {
+            if (e.touches.length !== 1) return;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            dragStartTime = performance.now();
+            isDraggingTab = false;
+            pendingPercent = null;
+            tabWidth = (this.els.tabBar.clientWidth - 8) / 3;
+          }, { passive: true });
+
+          this.els.tabBar.addEventListener("touchmove", (e) => {
+            if (e.touches.length !== 1 || !tabWidth) return;
+            const dx = e.touches[0].clientX - dragStartX;
+            const dy = e.touches[0].clientY - dragStartY;
+            if (!isDraggingTab && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) {
+              isDraggingTab = true;
+              this.els.tabSlider.classList.add("dragging");
+            }
+            if (isDraggingTab) {
+              const basePercent = this.currentTabIndex * 100;
+              const rawPercent = basePercent + (dx / tabWidth) * 100;
+              pendingPercent = Motion.rubberBand(rawPercent, 0, 200, 0.22);
+              if (!dragRafId) {
+                dragRafId = requestAnimationFrame(flushSliderFrame);
+              }
+            }
+          }, { passive: true });
+
+          const finishTabDrag = (endX) => {
+            if (dragRafId) {
+              cancelAnimationFrame(dragRafId);
+              dragRafId = null;
+            }
+            if (!isDraggingTab) return;
+            this.els.tabSlider.classList.remove("dragging");
+            const dx = endX - dragStartX;
+            const elapsed = Math.max(12, performance.now() - dragStartTime);
+            const velocity = dx / elapsed;
+
+            const projectedSteps = (dx + velocity * 105) / tabWidth;
+            const targetIndex = Math.round(this.currentTabIndex + projectedSteps);
+            isDraggingTab = false;
+            pendingPercent = null;
+            this.switchTab(targetIndex, targetIndex !== this.currentTabIndex);
+          };
+
+          this.els.tabBar.addEventListener("touchend", (e) => {
+            const endX = e.changedTouches[0]?.clientX ?? dragStartX;
+            finishTabDrag(endX);
+          });
+
+          this.els.tabBar.addEventListener("touchcancel", () => {
+            if (dragRafId) {
+              cancelAnimationFrame(dragRafId);
+              dragRafId = null;
+            }
+            if (!isDraggingTab) return;
+            this.els.tabSlider.classList.remove("dragging");
+            isDraggingTab = false;
+            pendingPercent = null;
+            this.switchTab(this.currentTabIndex, false);
+          });
+
+          /* 主内容区轻扫切换 Tab（补全的代码部分） */
+          let swipeStartX = 0;
+          let swipeStartY = 0;
+          let swipeStartTime = 0;
+          
+          this.els.scrollArea.addEventListener("touchstart", (e) => {
+            if (e.touches.length !== 1) return;
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+            swipeStartTime = performance.now();
+          }, { passive: true });
+
+          this.els.scrollArea.addEventListener("touchend", (e) => {
+            if (e.changedTouches.length !== 1) return;
+            const targetTag = e.target.tagName;
+            if (targetTag === "TEXTAREA" || targetTag === "INPUT") return;
+
+            const dx = e.changedTouches[0].clientX - swipeStartX;
+            const dy = e.changedTouches[0].clientY - swipeStartY;
+            const elapsed = Math.max(12, performance.now() - swipeStartTime);
+            const isQuickFlick = Math.abs(dx) > 36 && Math.abs(dx / elapsed) > 0.34;
+
+            if ((Math.abs(dx) > 58 || isQuickFlick) && Math.abs(dx) > Math.abs(dy) * 1.5) {
+              if (dx < 0 && this.currentTabIndex < 2) {
+                this.switchTab(this.currentTabIndex + 1, true);
+              } else if (dx > 0 && this.currentTabIndex > 0) {
+                this.switchTab(this.currentTabIndex - 1, true);
+              }
+            }
+          }, { passive: true });
+
+          /* 导出与清空 */
+          document.getElementById("exportBtn").addEventListener("click", () => {
+            const blob = new Blob([JSON.stringify(Store.state, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `blank-v0.6.1-backup-${this.cachedDateCtx.todayKey}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            Haptics.tap();
+            this.showToast("已导出本地备份");
+          });
+
+          document.getElementById("resetBtn").addEventListener("click", () => {
+            Haptics.tap();
+            this.els.confirmResetModal.classList.add("open");
+          });
+          document.getElementById("cancelResetBtn").addEventListener("click", () => {
+            this.els.confirmResetModal.classList.remove("open");
+          });
+          this.els.confirmResetModal.addEventListener("click", (e) => {
+            if (e.target === this.els.confirmResetModal) {
+              this.els.confirmResetModal.classList.remove("open");
+            }
+          });
+          document.getElementById("confirmResetBtn").addEventListener("click", () => {
+            Store.state = {
+              theme: Store.state.theme,
+              habits: [],
+              journals: []
+            };
+            Store.save();
+            this.renderHabits(false);
+            this.renderJournals(false);
+            this.els.confirmResetModal.classList.remove("open");
+            Haptics.soft();
+            this.showToast("已清空全部本地数据");
+          });
+
+          /* 后台切回前台时检测是否跨午夜 */
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+              const latestKey = DateUtils.formatKey(new Date());
+              if (latestKey !== this.cachedDateCtx.todayKey) {
+                this.syncDateHeader();
+                this.renderHabits(false);
+              }
+            }
+          });
+        }
+      };
+
+
+      /* 6. 单文件零依赖 PWA 引擎（自适应图标 + 动态 Manifest + 离线缓存 + 主屏幕安装） */
+      const PWA = {
+        deferredPrompt: null,
+
+        generateAppIconDataUrl(size) {
+          const canvas = document.createElement("canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return "";
+
+          // 温润宣纸底色
+          ctx.fillStyle = "#F7F5F0";
+          ctx.fillRect(0, 0, size, size);
+
+          // 细微边框框线
+          const inset = size * 0.08;
+          ctx.strokeStyle = "rgba(35, 34, 32, 0.12)";
+          ctx.lineWidth = Math.max(1.5, size * 0.008);
+          const rx = inset, ry = inset, rw = size - inset * 2, rh = size - inset * 2, rad = size * 0.22;
+          ctx.beginPath();
+          ctx.moveTo(rx + rad, ry);
+          ctx.lineTo(rx + rw - rad, ry);
+          ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rad);
+          ctx.lineTo(rx + rw, ry + rh - rad);
+          ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rad, ry + rh);
+          ctx.lineTo(rx + rad, ry + rh);
+          ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rad);
+          ctx.lineTo(rx, ry + rad);
+          ctx.quadraticCurveTo(rx, ry, rx + rad, ry);
+          ctx.closePath();
+          ctx.stroke();
+
+          // BLANCRAFT 品牌几何星芒徽记（青苔绿点缀）
+          const cx = size * 0.5;
+          const cy = size * 0.5;
+          const rOuter = size * 0.25;
+          const rInner = size * 0.072;
+          ctx.strokeStyle = "#5D7A67";
+          ctx.lineWidth = Math.max(2.5, size * 0.024);
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - rOuter);
+          ctx.lineTo(cx + rInner, cy - rInner);
+          ctx.lineTo(cx + rOuter, cy - rInner);
+
+          ctx.moveTo(cx + rOuter, cy);
+          ctx.lineTo(cx + rInner, cy + rInner);
+          ctx.lineTo(cx + rInner, cy + rOuter);
+
+          ctx.moveTo(cx, cy + rOuter);
+          ctx.lineTo(cx - rInner, cy + rInner);
+          ctx.lineTo(cx - rOuter, cy + rInner);
+
+          ctx.moveTo(cx - rOuter, cy);
+          ctx.lineTo(cx - rInner, cy - rInner);
+          ctx.lineTo(cx - rInner, cy - rOuter);
+          ctx.stroke();
+
+          return canvas.toDataURL("image/png");
+        },
+
+        injectIconsAndManifest() {
+          try {
+            const icon192 = this.generateAppIconDataUrl(192);
+            const icon512 = this.generateAppIconDataUrl(512);
+
+            const appleLink = document.getElementById("appleTouchIconLink");
+            const favLink = document.getElementById("faviconLink");
+            if (appleLink && icon192) appleLink.href = icon192;
+            if (favLink && icon192) favLink.href = icon192;
+
+            const startUrl = window.location.href.split("#")[0];
+            const manifest = {
+              name: "留白 Blank — 极简日常与日记",
+              short_name: "留白",
+              description: "克制安静的习惯节律与随手日记，支持完全离线使用。",
+              start_url: startUrl,
+              scope: "./",
+              display: "standalone",
+              orientation: "portrait",
+              background_color: "#F7F5F0",
+              theme_color: "#F7F5F0",
+              icons: [
+                { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+                { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+              ]
+            };
+
+            const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+            const manifestUrl = URL.createObjectURL(blob);
+            const manifestLink = document.getElementById("pwaManifestLink");
+            if (manifestLink) manifestLink.href = manifestUrl;
+          } catch {
+            // 降级静默处理
+          }
+        },
+
+        registerOfflineWorker() {
+          const statusDesc = document.getElementById("pwaStatusDesc");
+          const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+          if (isStandalone && statusDesc) {
+            statusDesc.textContent = "已作为独立全屏应用运行 · 离线就绪";
+          }
+
+          if (!("serviceWorker" in navigator)) return;
+          if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+            return;
+          }
+
+          const swCode = `
+            const CACHE_NAME = "blank-pwa-v0.6.1";
+            self.addEventListener("install", (event) => {
+              self.skipWaiting();
+              event.waitUntil(
+                caches.open(CACHE_NAME).then((cache) => cache.addAll([self.location.href]).catch(() => {}))
+              );
+            });
+            self.addEventListener("activate", (event) => {
+              event.waitUntil(
+                caches.keys().then((keys) =>
+                  Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+                ).then(() => self.clients.claim())
+              );
+            });
+            self.addEventListener("fetch", (event) => {
+              if (event.request.method !== "GET") return;
+              event.respondWith(
+                caches.match(event.request).then((cached) => {
+                  const networkFetch = fetch(event.request).then((res) => {
+                    if (res && res.status === 200) {
+                      const copy = res.clone();
+                      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+                    }
+                    return res;
+                  }).catch(() => cached);
+                  return cached || networkFetch;
+                })
+              );
+            });
+          `;
+
+          try {
+            const swBlob = new Blob([swCode], { type: "application/javascript" });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).then(() => {
+              if (statusDesc && !isStandalone) {
+                statusDesc.textContent = "离线缓存已就绪 · 支持添加到主屏幕";
+              }
+            }).catch(() => {});
+          } catch {
+            // 某些严格沙盒或 file:// 协议下静默跳过
+          }
+        },
+
+        bindInstallUI() {
+          const installBtn = document.getElementById("installPwaBtn");
+          const guideModal = document.getElementById("pwaGuideModal");
+          const closeGuideBtn = document.getElementById("closePwaGuideBtn");
+
+          window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            this.deferredPrompt = e;
+            if (installBtn) installBtn.textContent = "一键安装";
+          });
+
+          window.addEventListener("appinstalled", () => {
+            this.deferredPrompt = null;
+            if (installBtn) installBtn.textContent = "已安装";
+            const statusDesc = document.getElementById("pwaStatusDesc");
+            if (statusDesc) statusDesc.textContent = "已安装到主屏幕 · 离线就绪";
+            UI.showToast("已安装到主屏幕");
+          });
+
+          if (installBtn) {
+            installBtn.addEventListener("click", async () => {
+              Haptics.tap();
+              if (this.deferredPrompt) {
+                this.deferredPrompt.prompt();
+                const { outcome } = await this.deferredPrompt.userChoice;
+                if (outcome === "accepted") {
+                  this.deferredPrompt = null;
+                }
+              } else if (guideModal) {
+                guideModal.classList.add("open");
+              }
+            });
+          }
+
+          if (closeGuideBtn && guideModal) {
+            closeGuideBtn.addEventListener("click", () => guideModal.classList.remove("open"));
+            guideModal.addEventListener("click", (e) => {
+              if (e.target === guideModal) guideModal.classList.remove("open");
+            });
+          }
+        },
+
+        init() {
+          this.injectIconsAndManifest();
+          this.registerOfflineWorker();
+          this.bindInstallUI();
+        }
+      };
+
+      function bootApp() {
+        try { Store.init(); } catch (_) {}
+        try { UI.init(); } catch (_) {}
+        try { PWA.init(); } catch (_) {}
+      }
+      if (document.readyState === "loading") {
+        window.addEventListener("DOMContentLoaded", bootApp, { once: true });
+      } else {
+        bootApp();
+      }
+    })();
+  </script>
+</body>
+</html>
